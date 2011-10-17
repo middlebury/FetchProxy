@@ -21,13 +21,15 @@ CREATE TABLE IF NOT EXISTS `feeds` (
   `id` varchar(32) NOT NULL,
   `url` text NOT NULL,
   `headers` text,
-  `data` blob,
+  `data` longblob,
   `last_fetch` datetime NOT NULL,
   `last_access` datetime NOT NULL,
   `num_access` int(11) NOT NULL default '0',
   `num_errors` int(11) NOT NULL default '0',
   `custom_ttl` int(11) default NULL,
-  PRIMARY KEY  (`id`)
+  PRIMARY KEY  (`id`),
+  KEY `last_access` (`last_access`),
+  KEY `fetch_index` (`custom_ttl`,`last_fetch`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
@@ -45,5 +47,8 @@ CREATE TABLE IF NOT EXISTS `log` (
   `fetch_url` text,
   `message` text NOT NULL,
   `num_errors` int(11) default NULL,
-  PRIMARY KEY  (`id`)
+  PRIMARY KEY  (`id`),
+  KEY `event_type` (`event_type`),
+  KEY `feed_id` (`feed_id`),
+  KEY `tstamp` (`tstamp`,`feed_id`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
