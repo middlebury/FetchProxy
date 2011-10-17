@@ -22,14 +22,17 @@ if (empty($row)) {
 	$stmt->execute(array($id));
 	$row = $stmt->fetchObject();
 }
-$stmt = $db->prepare('UPDATE feeds SET last_access = NOW(), num_access = :num_access WHERE id = :id');
-$stmt->execute(array(
-	':id' => $id,
-	':num_access' => $row->num_access + 1,
-));
+
+if ($row) {
+	$stmt = $db->prepare('UPDATE feeds SET last_access = NOW(), num_access = :num_access WHERE id = :id');
+	$stmt->execute(array(
+		':id' => $id,
+		':num_access' => $row->num_access + 1,
+	));
+}
 
 // If headers and data are null, then return an error
-if (is_null($row->headers) && is_null($row->data)) {
+if (!$row || is_null($row->headers) && is_null($row->data)) {
 	header('HTTP/1.1 500 Internal Server Error');
 }
 // Otherwise, return our content.
