@@ -10,9 +10,22 @@ $id = md5($url);
 
 require_once('config.php');
 require_once('lib.php');
+
 global $db;
 $db = new PDO(DB_DSN, DB_USER, DB_PASS);
 
+// Verify that the client is allowed.
+if (empty($allowedClients) || !in_array($_SERVER['REMOTE_ADDR'], $allowedClients)) {
+	header('HTTP/1.1 403 Forbidden');
+	header('Content-Type: text/plain');
+	print "403 Forbidden\n";
+	$message = $_SERVER['REMOTE_ADDR']." is not in the allowed-client list.";
+	log_event('access_denied', $message, $id, $url);
+	print $message;
+	exit;
+}
+
+// Look up our data
 $stmt = $db->prepare('SELECT * FROM feeds WHERE id = ?');
 $stmt->execute(array($id));
 $row = $stmt->fetchObject();

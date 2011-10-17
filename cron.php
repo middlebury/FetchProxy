@@ -4,6 +4,16 @@ require_once('config.php');
 require_once('lib.php');
 $db = new PDO(DB_DSN, DB_USER, DB_PASS);
 
+if (php_sapi_name() != 'cli') {
+	header('HTTP/1.1 403 Forbidden');
+	header('Content-Type: text/plain');
+	print "403 Forbidden\n";
+	$message = "cron.php can only be invoked from the command-line.";
+	log_event('access_denied', $message);
+	print $message;
+	exit;
+}
+
 // Update our feeds
 $stmt = $db->prepare(
 	'SELECT id, url

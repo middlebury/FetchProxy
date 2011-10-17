@@ -40,9 +40,9 @@ CREATE TABLE IF NOT EXISTS `log` (
   `id` int(11) NOT NULL auto_increment,
   `tstamp` timestamp NOT NULL default CURRENT_TIMESTAMP,
   `event_type` varchar(20) default NULL,
-  `feed_id` varchar(32) NOT NULL,
-  `feed_url` text NOT NULL,
-  `fetch_url` text NOT NULL,
+  `feed_id` varchar(32) default NULL,
+  `feed_url` text,
+  `fetch_url` text,
   `message` text NOT NULL,
   `num_errors` int(11) default NULL,
   PRIMARY KEY  (`id`)
