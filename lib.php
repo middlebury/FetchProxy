@@ -35,6 +35,7 @@ function fetch_url ($id, $origUrl, $fetchUrl = null, $numRedirects = 0) {
 			$stmt = $db->prepare('SELECT COUNT(*) FROM feeds WHERE id = ?');
 			$stmt->execute(array($id));
 			$exists = intval($stmt->fetchColumn());
+			$stmt->closeCursor();
 			if ($exists) {
 				$stmt = $db->prepare('UPDATE feeds SET headers = :headers, data = :data, last_fetch = NOW(), num_errors = 0 WHERE id = :id');
 				$stmt->execute(array(
@@ -90,6 +91,7 @@ function fetch_error ($id, $origUrl, $fetchUrl, $message) {
 	$stmt = $db->prepare('SELECT num_errors FROM feeds WHERE id = ?');
 	$stmt->execute(array($id));
 	$numErrors = $stmt->fetchColumn();
+	$stmt->closeCursor();
 	$numErrors++;
 	
 	// Increment the counter in the db row.

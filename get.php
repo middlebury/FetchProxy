@@ -40,6 +40,7 @@ if (!$allowed) {
 $stmt = $db->prepare('SELECT * FROM feeds WHERE id = ?');
 $stmt->execute(array($id));
 $row = $stmt->fetchObject();
+$stmt->closeCursor();
 if (empty($row)) {
 	try {
 		fetch_url($id, $url);
@@ -52,6 +53,7 @@ if (empty($row)) {
 	$stmt = $db->prepare('SELECT * FROM feeds WHERE id = ?');
 	$stmt->execute(array($id));
 	$row = $stmt->fetchObject();
+	$stmt->closeCursor();
 }
 
 if ($row) {
