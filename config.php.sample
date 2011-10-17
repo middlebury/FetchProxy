@@ -1,0 +1,12 @@
+<?php
+
+// Database connection details
+define('DB_DSN', 'mysql:host=localhost;dbname=afranco_fetchproxy');
+define('DB_USER', 'testuser');
+define('DB_PASS', 'testpassword');
+
+// Number of minutes between fetches
+define('DEFAULT_TTL', 60);
+
+// Number of fetches before an error response is returned to the client
+define('MAX_NUM_ERRORS', 10);
