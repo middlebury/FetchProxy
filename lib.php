@@ -44,14 +44,7 @@ function fetch_url ($id, $origUrl, $fetchUrl = null, $numRedirects = 0) {
 					));
 				
 				// Log the update
-				$stmt = $db->prepare('INSERT INTO log (event_type, feed_id, feed_url, fetch_url, message, num_errors) VALUES (:event_type, :feed_id, :feed_url, :fetch_url, :message, 0)');
-				$stmt->execute(array(
-						':event_type' => 'update',
-						':feed_id' => $id,
-						':feed_url' => $origUrl,
-						':fetch_url' => $fetchUrl,
-						':message' => 'Feed fetched.',
-					));
+				log_event('update', 'Feed fetched.', $id, $origUrl, $fetchUrl, 0);
 			} else {
 				$stmt = $db->prepare('INSERT INTO feeds (id, url, headers, data, last_fetch, num_errors) VALUES (:id, :url, :headers, :data, NOW(), 0)');
 				$stmt->execute(array(
@@ -62,14 +55,7 @@ function fetch_url ($id, $origUrl, $fetchUrl = null, $numRedirects = 0) {
 					));
 				
 				// Log the insert
-				$stmt = $db->prepare('INSERT INTO log (event_type, feed_id, feed_url, fetch_url, message, num_errors) VALUES (:event_type, :feed_id, :feed_url, :fetch_url, :message, 0)');
-				$stmt->execute(array(
-						':event_type' => 'add',
-						':feed_id' => $id,
-						':feed_url' => $origUrl,
-						':fetch_url' => $fetchUrl,
-						':message' => 'New feed fetched.',
-					));
+				log_event('add', 'New feed fetched.', $id, $origUrl, $fetchUrl, 0);
 			}
 			
 		}
@@ -113,16 +99,7 @@ function fetch_error ($id, $origUrl, $fetchUrl, $message) {
 			':num_errors' => $numErrors,
 		));
 	
-	// Log the error
-	$stmt = $db->prepare('INSERT INTO log (event_type, feed_id, feed_url, fetch_url, message, num_errors) VALUES (:event_type, :feed_id, :feed_url, :fetch_url, :message, :num_errors)');
-	$stmt->execute(array(
-			':event_type' => 'error',
-			':feed_id' => $id,
-			':feed_url' => $origUrl,
-			':fetch_url' => $fetchUrl,
-			':message' => $message,
-			':num_errors' => $numErrors,
-		));
+	log_event('error', $message, $id, $origUrl, $fetchUrl, $numErrors);
 	
 	// If we have been fetching for a long time and are still getting errors,
 	// clear out our data to indicate that the client should be given an error
@@ -135,4 +112,30 @@ function fetch_error ($id, $origUrl, $fetchUrl, $message) {
 	}
 	
 	throw new Exception($message);
+}
+
+/**
+ * Log an event
+ * 
+ * @param string $type
+ * @param string $message
+ * @param string $id
+ * @param string $origUrl
+ * @param optional string $fetchUrl
+ * @param optional int $numErrors
+ * @param string 
+ * @return void
+ */
+function log_event ($type, $message, $id, $origUrl, $fetchUrl = null, $numErrors = null) {
+	global $db;
+	
+	$stmt = $db->prepare('INSERT INTO log (event_type, feed_id, feed_url, fetch_url, message, num_errors) VALUES (:event_type, :feed_id, :feed_url, :fetch_url, :message, :num_errors)');
+	$stmt->execute(array(
+			':event_type' => $type,
+			':feed_id' => $id,
+			':feed_url' => $origUrl,
+			':fetch_url' => $fetchUrl,
+			':message' => $message,
+			':num_errors' => $numErrors,
+		));
 }
