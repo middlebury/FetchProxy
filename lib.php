@@ -42,6 +42,16 @@ function fetch_url ($id, $origUrl, $fetchUrl = null, $numRedirects = 0) {
 						':headers' => implode("\n", $headerStrings),
 						':data' => $data,
 					));
+				
+				// Log the update
+				$stmt = $db->prepare('INSERT INTO log (event_type, feed_id, feed_url, fetch_url, message, num_errors) VALUES (:event_type, :feed_id, :feed_url, :fetch_url, :message, 0)');
+				$stmt->execute(array(
+						':event_type' => 'update',
+						':feed_id' => $id,
+						':feed_url' => $origUrl,
+						':fetch_url' => $fetchUrl,
+						':message' => 'Feed fetched.',
+					));
 			} else {
 				$stmt = $db->prepare('INSERT INTO feeds (id, url, headers, data, last_fetch, num_errors) VALUES (:id, :url, :headers, :data, NOW(), 0)');
 				$stmt->execute(array(
@@ -50,7 +60,16 @@ function fetch_url ($id, $origUrl, $fetchUrl = null, $numRedirects = 0) {
 						':headers' => implode("\n", $headerStrings),
 						':data' => $data,
 					));
-
+				
+				// Log the insert
+				$stmt = $db->prepare('INSERT INTO log (event_type, feed_id, feed_url, fetch_url, message, num_errors) VALUES (:event_type, :feed_id, :feed_url, :fetch_url, :message, 0)');
+				$stmt->execute(array(
+						':event_type' => 'add',
+						':feed_id' => $id,
+						':feed_url' => $origUrl,
+						':fetch_url' => $fetchUrl,
+						':message' => 'New feed fetched.',
+					));
 			}
 			
 		}
@@ -95,8 +114,9 @@ function fetch_error ($id, $origUrl, $fetchUrl, $message) {
 		));
 	
 	// Log the error
-	$stmt = $db->prepare('INSERT INTO log (feed_id, feed_url, fetch_url, message, num_errors) VALUES (:feed_id, :feed_url, :fetch_url, :message, :num_errors)');
+	$stmt = $db->prepare('INSERT INTO log (event_type, feed_id, feed_url, fetch_url, message, num_errors) VALUES (:event_type, :feed_id, :feed_url, :fetch_url, :message, :num_errors)');
 	$stmt->execute(array(
+			':event_type' => 'error',
 			':feed_id' => $id,
 			':feed_url' => $origUrl,
 			':fetch_url' => $fetchUrl,

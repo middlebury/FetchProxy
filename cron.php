@@ -30,11 +30,12 @@ $stmt = $db->prepare(
 $stmt->execute();
 $rows = $stmt->fetchAll(PDO::FETCH_OBJ);
 
-$logStmt = $db->prepare('INSERT INTO log (feed_id, feed_url, message) VALUES (:feed_id, :feed_url, :message)');
+$logStmt = $db->prepare('INSERT INTO log (event_type, feed_id, feed_url, message) VALUES (:event_type, :feed_id, :feed_url, :message)');
 $deleteStmt = $db->prepare('DELETE FROM feeds WHERE id = ?');
 foreach ($rows as $row) {
 	$db->beginTransaction();
 	$logStmt->execute(array(
+		':event_type' => 'delete',
 		':feed_id' => $row->id,
 		':feed_url' => $row->url,
 		':message' => 'Feed not accessed in '.MAX_LIFE_WITHOUT_ACCESS.', deleting.',
