@@ -133,5 +133,6 @@ function fetch_error ($id, $origUrl, $fetchUrl, $message) {
 				':id' => $id,
 			));
 	}
-		
+	
+	throw new Exception($message);
 }

@@ -16,7 +16,11 @@ $stmt->execute();
 $rows = $stmt->fetchAll(PDO::FETCH_OBJ);
 
 foreach ($rows as $row) {
-	fetch_url($row->id, $row->url);
+	try {
+		fetch_url($row->id, $row->url);
+	} catch (Exception $e) {
+// 		print $e->getMessage()."\n";
+	}
 }
 
 // Delete feeds that haven't been accessed in a very long time so we don't waste
