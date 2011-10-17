@@ -82,7 +82,7 @@ function fetch_url ($id, $origUrl, $fetchUrl = null, $numRedirects = 0) {
 function fetch_error ($id, $origUrl, $fetchUrl, $message) {
 	global $db;
 	
-	$stmt = $db->preprare('SELECT num_errors FROM feeds WHERE id = ?');
+	$stmt = $db->prepare('SELECT num_errors FROM feeds WHERE id = ?');
 	$stmt->execute(array($id));
 	$numErrors = $stmt->fetchColumn();
 	$numErrors++;
