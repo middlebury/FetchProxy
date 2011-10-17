@@ -18,7 +18,7 @@ $db = new PDO(DB_DSN, DB_USER, DB_PASS);
 $allowed = FALSE;
 if (!empty($allowedClients) && in_array($_SERVER['REMOTE_ADDR'], $allowedClients))
 	$allowed = TRUE;
-if (!empty($allowedProxyChains)) {
+if (!empty($allowedProxyChains) && !empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
 	foreach ($allowedProxyChains as $regex) {
 		if (preg_match($regex, $_SERVER['HTTP_X_FORWARDED_FOR'])) {
 			$allowed = TRUE;
