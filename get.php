@@ -15,7 +15,18 @@ global $db;
 $db = new PDO(DB_DSN, DB_USER, DB_PASS);
 
 // Verify that the client is allowed.
-if (empty($allowedClients) || !in_array($_SERVER['REMOTE_ADDR'], $allowedClients)) {
+$allowed = FALSE;
+if (!empty($allowedClients) && in_array($_SERVER['REMOTE_ADDR'], $allowedClients))
+	$allowed = TRUE;
+if (!empty($allowedProxyChains)) {
+	foreach ($allowedProxyChains as $regex) {
+		if (preg_match($regex, $_SERVER['HTTP_X_FORWARDED_FOR'])) {
+			$allowed = TRUE;
+			break;
+		}
+	}
+}
+if (!$allowed) {
 	header('HTTP/1.1 403 Forbidden');
 	header('Content-Type: text/plain');
 	print "403 Forbidden\n";

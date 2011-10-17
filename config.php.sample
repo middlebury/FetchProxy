@@ -18,7 +18,15 @@ define('MAX_LIFE_WITHOUT_ACCESS', '30 DAY');
 // Define a list of allowed client IP addresses.
 // There is no other security built into this system, so to prevent unauthorized
 // clients from serving unsafe content from your domain, please define an array of
-// allowed IP address that can use this service.
+// allowed IP address that can use this service or a list of proxies.
 $allowedClients = array(
 // 	'127.0.0.1',
+);
+
+// Define a chain of proxy servers/client that are allowed to access this service.
+// Each definition is a regular expression. As defined in the X-Forwarded-For
+// spec, the last entry in the list is the proxy closest to the server and the first
+// entry is the original client. Be sure not to be too open-ended in what you allow.
+$allowedProxyChains = array(
+// '/^140.233.2.70, 140.233.2.6$/',
 );
