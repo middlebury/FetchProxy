@@ -31,6 +31,8 @@ if (!$allowed) {
 	header('Content-Type: text/plain');
 	print "403 Forbidden\n";
 	$message = $_SERVER['REMOTE_ADDR']." is not in the allowed-client list.";
+	if (!empty($allowedProxyChains) && !empty($_SERVER['HTTP_X_FORWARDED_FOR']))
+		$message .= "\n".$_SERVER['HTTP_X_FORWARDED_FOR'].' is not in the allowed-proxy-chains list.';
 	log_event('access_denied', $message, $id, $url);
 	print $message;
 	exit;
