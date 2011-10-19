@@ -143,7 +143,9 @@ function fetch_error ($id, $origUrl, $fetchUrl, $message, $statusCode, $statusMs
 		store_feed($id, $origUrl, null, null, $statusCode, $statusMsg);
 	}
 	
-	throw new FetchProxyException($message, $statusCode, null, $statusMsg);
+	$exception = new FetchProxyException($message, $statusCode);
+	$exception->setStatusMessage($statusMsg);
+	throw $exception;
 }
 
 /**
@@ -181,13 +183,14 @@ class FetchProxyException
 	private $statusMsg = '';
 	
 	/**
-	 * Constructor
+	 * Set the status message.
+	 * 
+	 * @param string $statusMsg
+	 * @return void
 	 */
-	public function __construct ($message = "", $code = 0, Exception $previous = NULL, $statusMsg = '') {
-		parent::__construct($message, $code, $previous);
+	public function setStatusMessage ($statusMsg) {
 		$this->statusMsg = $statusMsg;
 	}
-	
 	/**
 	 * Answer our status message
 	 * 
@@ -196,4 +199,6 @@ class FetchProxyException
 	public function getStatusMessage () {
 		return $this->statusMsg;
 	}
+	
+	
 }
