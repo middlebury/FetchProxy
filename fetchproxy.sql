@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS `feeds` (
   `url` text NOT NULL,
   `headers` text,
   `data` longblob,
+  `first_fetch` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `last_fetch` datetime NOT NULL,
   `last_access` datetime NOT NULL,
   `num_access` int(11) NOT NULL default '0',
