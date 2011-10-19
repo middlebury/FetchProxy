@@ -84,7 +84,7 @@ function store_feed ($id, $url, $headers, $data, $statusCode, $statusMsg) {
 		
 		return 'UPDATE';
 	} else {
-		$stmt = $db->prepare('INSERT INTO feeds (id, url, headers, data, status_code, status_msg, last_fetch, num_errors) VALUES (:id, :url, :headers, :data, :status_code, :status_msg, NOW(), 0)');
+		$stmt = $db->prepare('INSERT INTO feeds (id, url, headers, data, status_code, status_msg, last_fetch, last_access, num_errors) VALUES (:id, :url, :headers, :data, :status_code, :status_msg, NOW(), NOW(), 0)');
 		$stmt->execute(array(
 				':id' => $id,
 				':url' => $url,
