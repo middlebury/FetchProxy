@@ -16,7 +16,7 @@ function fetch_url ($id, $origUrl, $fetchUrl = null, $numRedirects = 0) {
 	
 	// Check for redirect loops
 	if ($numRedirects > 4)
-		fetch_error($id, $origUrl, $fetchUrl, 'Redirect limit of 4 exceeded.');
+		fetch_error($id, $origUrl, $fetchUrl, 'Redirect limit of 4 exceeded.', 552, 'Too Many Redirects');
 	
 	$r = new HttpRequest($fetchUrl);
 	try {
@@ -30,7 +30,7 @@ function fetch_url ($id, $origUrl, $fetchUrl = null, $numRedirects = 0) {
 				$headerStrings[] = $name.': '.$value;
 			}
 			
-			$operation = store_feed($id, $origUrl, implode("\n", $headerStrings), $data);
+			$operation = store_feed($id, $origUrl, implode("\n", $headerStrings), $data, 200, 'OK');
 			if ($operation == 'INSERT')
 				log_event('add', 'New feed fetched.', $id, $origUrl, $fetchUrl, 0);
 			else
@@ -41,16 +41,16 @@ function fetch_url ($id, $origUrl, $fetchUrl = null, $numRedirects = 0) {
 		else if (in_array($r->getResponseCode(), array(301, 302))) {
 			$location = $r->getResponseHeader('Location');
 			if (empty($location))
-				fetch_error($id, $origUrl, $fetchUrl, 'No Location header found.');
+				fetch_error($id, $origUrl, $fetchUrl, 'No Location header found.', 551, 'HTTP Location missing');
 			else
 				fetch_url($id, $origUrl, $location, $numRedirects++);
 		}
 		// Record errors
 		else {
-			fetch_error($id, $origUrl, $fetchUrl, 'Error response '.$r->getResponseCode().' recieved.');
+			fetch_error($id, $origUrl, $fetchUrl, 'Error response '.$r->getResponseCode().' recieved.', $r->getResponseCode(), $r->getResponseStatus());
 		}
 	} catch (HttpException $e) {
-		fetch_error($id, $origUrl, $fetchUrl, get_class($e).': '.$e->getMessage());
+		fetch_error($id, $origUrl, $fetchUrl, get_class($e).': '.$e->getMessage(), 550, 'HTTP Error');
 	}
 }
 
@@ -61,9 +61,11 @@ function fetch_url ($id, $origUrl, $fetchUrl = null, $numRedirects = 0) {
  * @param string $url The URL of the feed.
  * @param string $headers
  * @param string $data
+ * @param int $statusCode
+ * @param string $statusMsg
  * @return string 'INSERT' or 'UPDATE'
  */
-function store_feed ($id, $url, $headers, $data) {
+function store_feed ($id, $url, $headers, $data, $statusCode, $statusMsg) {
 	global $db;
 	
 	$stmt = $db->prepare('SELECT COUNT(*) FROM feeds WHERE id = ?');
@@ -71,21 +73,25 @@ function store_feed ($id, $url, $headers, $data) {
 	$exists = intval($stmt->fetchColumn());
 	$stmt->closeCursor();
 	if ($exists) {
-		$stmt = $db->prepare('UPDATE feeds SET headers = :headers, data = :data, last_fetch = NOW(), num_errors = 0 WHERE id = :id');
+		$stmt = $db->prepare('UPDATE feeds SET headers = :headers, data = :data, status_code = :status_code, status_msg = :status_msg, last_fetch = NOW(), num_errors = 0 WHERE id = :id');
 		$stmt->execute(array(
 				':id' => $id,
 				':headers' => $headers,
 				':data' => $data,
+				':status_code' => $statusCode,
+				':status_msg' => $statusMsg,
 			));
 		
 		return 'UPDATE';
 	} else {
-		$stmt = $db->prepare('INSERT INTO feeds (id, url, headers, data, last_fetch, num_errors) VALUES (:id, :url, :headers, :data, NOW(), 0)');
+		$stmt = $db->prepare('INSERT INTO feeds (id, url, headers, data, status_code, status_msg, last_fetch, num_errors) VALUES (:id, :url, :headers, :data, :status_code, :status_msg, NOW(), 0)');
 		$stmt->execute(array(
 				':id' => $id,
 				':url' => $url,
 				':headers' => $headers,
 				':data' => $data,
+				':status_code' => $statusCode,
+				':status_msg' => $statusMsg,
 			));
 		
 		return 'INSERT';
@@ -98,9 +104,11 @@ function store_feed ($id, $url, $headers, $data) {
  * @param string $origUrl
  * @param string $fetchUrl
  * @param string $message
+ * @param int $statusCode
+ * @param string $statusMsg
  * @return void
  */
-function fetch_error ($id, $origUrl, $fetchUrl, $message) {
+function fetch_error ($id, $origUrl, $fetchUrl, $message, $statusCode, $statusMsg) {
 	global $db;
 	
 	// Store an error response so that we can return quickly in the future
@@ -108,7 +116,7 @@ function fetch_error ($id, $origUrl, $fetchUrl, $message) {
 	$stmt->execute(array($id));
 	$exists = intval($stmt->fetchColumn());
 	if (!$exists) {
-		store_feed($id, $origUrl, null, null);
+		store_feed($id, $origUrl, null, null, $statusCode, $statusMsg);
 	}
 	
 	// Get the number of errors.
@@ -131,10 +139,10 @@ function fetch_error ($id, $origUrl, $fetchUrl, $message) {
 	// clear out our data to indicate that the client should be given an error
 	// response.
 	if ($numErrors > MAX_NUM_ERRORS) {
-		store_feed($id, $origUrl, null, null);
+		store_feed($id, $origUrl, null, null, $statusCode, $statusMsg);
 	}
 	
-	throw new Exception($message);
+	throw new FetchProxyException($message, $statusCode, null, $statusMsg);
 }
 
 /**
@@ -161,4 +169,30 @@ function log_event ($type, $message, $id = null, $origUrl = null, $fetchUrl = nu
 			':message' => $message,
 			':num_errors' => $numErrors,
 		));
+}
+
+/**
+ * A class for FetchProxy Exceptions, includes a status message.
+ */
+class FetchProxyException
+	extends RuntimeException
+{
+	private $statusMsg = '';
+	
+	/**
+	 * Constructor
+	 */
+	public function __construct ($message = "", $code = 0, Exception $previous = NULL, $statusMsg = '') {
+		parent::__construct($message, $code, $previous);
+		$this->statusMsg = $statusMsg;
+	}
+	
+	/**
+	 * Answer our status message
+	 * 
+	 * @return string
+	 */
+	public function getStatusMessage () {
+		return $this->statusMsg;
+	}
 }

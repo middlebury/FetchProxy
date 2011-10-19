@@ -46,6 +46,11 @@ $stmt->closeCursor();
 if (empty($row)) {
 	try {
 		fetch_url($id, $url);
+	} catch (FetchProxyException $e) {
+		header('HTTP/1.1 '.$e->getCode().' '.$e->getStatusMessage());
+		header('Content-Type: text/plain');
+		print $e->getMessage();
+		exit;
 	} catch (Exception $e) {
 		header('HTTP/1.1 500 Internal Server Error');
 		header('Content-Type: text/plain');
@@ -68,8 +73,18 @@ if ($row) {
 
 // If headers and data are null, then return an error
 if (!$row || is_null($row->headers) && is_null($row->data)) {
-	header('HTTP/1.1 500 Internal Server Error');
+	if (!empty($row->status_code))
+		$code = $row->status_code;
+	else
+		$code = 500;
+	if (!empty($row->status_msg))
+		$status = $row->status_msg;
+	else
+		$status = 'Internal Server Error';
+	
+	header('HTTP/1.1 '.$code.' '.$status);
 	header('Content-Type: text/plain');
+	print $code.' '.$status."\n";
 	print 'Errors have occurred while trying to fetch the feed.';
 	exit;
 }
