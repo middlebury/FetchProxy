@@ -1,9 +1,15 @@
 <?php
 
-if (empty($_GET['url']))
-	throw new InvalidArgumentException('No url provided.');
-if (!parse_url($_GET['url']))
-	throw new InvalidArgumentException('Invalid url provided');
+try {
+	if (empty($_GET['url']))
+		throw new InvalidArgumentException('No url provided.');
+	if (!parse_url($_GET['url']))
+		throw new InvalidArgumentException('Invalid url provided');
+} catch (InvalidArgumentException $e) {
+	header('HTTP/1.1 400 Bad Request');
+	print "400 Bad Request\n".$e->getMessage();
+	exit;
+}
 
 $url = $_GET['url'];
 $id = md5($url);
