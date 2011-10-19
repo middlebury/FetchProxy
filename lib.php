@@ -115,6 +115,7 @@ function fetch_error ($id, $origUrl, $fetchUrl, $message, $statusCode, $statusMs
 	$stmt = $db->prepare('SELECT COUNT(*) FROM feeds WHERE id = ?');
 	$stmt->execute(array($id));
 	$exists = intval($stmt->fetchColumn());
+	$stmt->closeCursor();
 	if (!$exists) {
 		store_feed($id, $origUrl, null, null, $statusCode, $statusMsg);
 	}
