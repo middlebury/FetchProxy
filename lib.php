@@ -103,6 +103,15 @@ function store_feed ($id, $url, $headers, $data) {
 function fetch_error ($id, $origUrl, $fetchUrl, $message) {
 	global $db;
 	
+	// Store an error response so that we can return quickly in the future
+	$stmt = $db->prepare('SELECT COUNT(*) FROM feeds WHERE id = ?');
+	$stmt->execute(array($id));
+	$exists = intval($stmt->fetchColumn());
+	if (!$exists) {
+		store_feed($id, $origUrl, null, null);
+	}
+	
+	// Get the number of errors.
 	$stmt = $db->prepare('SELECT num_errors FROM feeds WHERE id = ?');
 	$stmt->execute(array($id));
 	$numErrors = $stmt->fetchColumn();
