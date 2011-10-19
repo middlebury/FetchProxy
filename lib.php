@@ -10,8 +10,6 @@
  * @return void
  */
 function fetch_url ($id, $origUrl, $fetchUrl = null, $numRedirects = 0) {
-	global $db;
-	
 	// If we aren't following a redirect, fetch the original url
 	if (is_null($fetchUrl))
 		$fetchUrl = $origUrl;
@@ -32,32 +30,11 @@ function fetch_url ($id, $origUrl, $fetchUrl = null, $numRedirects = 0) {
 				$headerStrings[] = $name.': '.$value;
 			}
 			
-			$stmt = $db->prepare('SELECT COUNT(*) FROM feeds WHERE id = ?');
-			$stmt->execute(array($id));
-			$exists = intval($stmt->fetchColumn());
-			$stmt->closeCursor();
-			if ($exists) {
-				$stmt = $db->prepare('UPDATE feeds SET headers = :headers, data = :data, last_fetch = NOW(), num_errors = 0 WHERE id = :id');
-				$stmt->execute(array(
-						':id' => $id,
-						':headers' => implode("\n", $headerStrings),
-						':data' => $data,
-					));
-				
-				// Log the update
-				log_event('update', 'Feed fetched.', $id, $origUrl, $fetchUrl, 0);
-			} else {
-				$stmt = $db->prepare('INSERT INTO feeds (id, url, headers, data, last_fetch, num_errors) VALUES (:id, :url, :headers, :data, NOW(), 0)');
-				$stmt->execute(array(
-						':id' => $id,
-						':url' => $origUrl,
-						':headers' => implode("\n", $headerStrings),
-						':data' => $data,
-					));
-				
-				// Log the insert
+			$operation = store_feed($id, $origUrl, implode("\n", $headerStrings), $data);
+			if ($operation == 'INSERT')
 				log_event('add', 'New feed fetched.', $id, $origUrl, $fetchUrl, 0);
-			}
+			else
+				log_event('update', 'Feed fetched.', $id, $origUrl, $fetchUrl, 0);
 			
 		}
 		// Follow redirects
@@ -74,6 +51,44 @@ function fetch_url ($id, $origUrl, $fetchUrl = null, $numRedirects = 0) {
 		}
 	} catch (HttpException $e) {
 		fetch_error($id, $origUrl, $fetchUrl, get_class($e).': '.$e->getMessage());
+	}
+}
+
+/**
+ * Store a feed, return the type of operation 'INSERT' or 'UPDATE'
+ * 
+ * @param string $id The id of the feed.
+ * @param string $url The URL of the feed.
+ * @param string $headers
+ * @param string $data
+ * @return string 'INSERT' or 'UPDATE'
+ */
+function store_feed ($id, $url, $headers, $data) {
+	global $db;
+	
+	$stmt = $db->prepare('SELECT COUNT(*) FROM feeds WHERE id = ?');
+	$stmt->execute(array($id));
+	$exists = intval($stmt->fetchColumn());
+	$stmt->closeCursor();
+	if ($exists) {
+		$stmt = $db->prepare('UPDATE feeds SET headers = :headers, data = :data, last_fetch = NOW(), num_errors = 0 WHERE id = :id');
+		$stmt->execute(array(
+				':id' => $id,
+				':headers' => $headers,
+				':data' => $data,
+			));
+		
+		return 'UPDATE';
+	} else {
+		$stmt = $db->prepare('INSERT INTO feeds (id, url, headers, data, last_fetch, num_errors) VALUES (:id, :url, :headers, :data, NOW(), 0)');
+		$stmt->execute(array(
+				':id' => $id,
+				':url' => $url,
+				':headers' => $headers,
+				':data' => $data,
+			));
+		
+		return 'INSERT';
 	}
 }
 
@@ -107,10 +122,7 @@ function fetch_error ($id, $origUrl, $fetchUrl, $message) {
 	// clear out our data to indicate that the client should be given an error
 	// response.
 	if ($numErrors > MAX_NUM_ERRORS) {
-		$stmt = $db->prepare('UPDATE feeds SET headers = NULL, data = NULL WHERE id = :id');
-		$stmt->execute(array(
-				':id' => $id,
-			));
+		store_feed($id, $origUrl, null, null);
 	}
 	
 	throw new Exception($message);
