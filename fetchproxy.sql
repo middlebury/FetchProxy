@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS `feeds` (
   `first_fetch` timestamp NOT NULL default CURRENT_TIMESTAMP,
   `last_fetch` datetime NOT NULL,
   `last_access` datetime NOT NULL,
-  `num_access` int(11) NOT NULL default '0',
+  `num_access` int(11) NOT NULL default '1',
   `num_errors` int(11) NOT NULL default '0',
   `custom_ttl` int(11) default NULL,
   PRIMARY KEY  (`id`),
