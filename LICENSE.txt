@@ -1,0 +1,16 @@
+Name: FetchProxy
+Author: Adam Franco
+URI: http://github.com/middlebury/FetchProxy
+Copyright (c) 2011, The President and Fellows of Middlebury College.
+
+Unless noted otherwise you are granted license to use redistribute,
+and/or modify FetchProxy and its associated components under the terms of
+the GNU General Public License (GPL) version 3 or later.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details.
+
+A copy of the GNU General Public License can be found in the same directory as this
+file, with the file name GPL-LICENSE.txt.
