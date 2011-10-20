@@ -93,7 +93,11 @@ foreach ($rows as $row) {
 }
 
 // Print out statistics
-$message = $fetched.' feeds fetched in '.round(microtime(true) - $start, 3).'s. '.$succeeded.' succeeded, '.$failed.' failed. '.$deleted.' not accessed in '.MAX_LIFE_WITHOUT_ACCESS.' and deleted.'."\n"; 
+$message = str_pad($fetched, 5, " ", STR_PAD_LEFT).' feeds fetched in '
+	.str_pad(round(microtime(true) - $start, 2), 6, " ", STR_PAD_LEFT).'s. '
+	.str_pad($succeeded, 5, " ", STR_PAD_LEFT).' succeeded, '
+	.str_pad($failed, 5, " ", STR_PAD_LEFT).' failed. '
+	.str_pad($deleted, 5, " ", STR_PAD_LEFT).' not accessed in '.MAX_LIFE_WITHOUT_ACCESS.' and deleted.'."\n"; 
 
 if (in_array('--stats', $argv))
 	print $message;
