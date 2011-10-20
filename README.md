@@ -90,56 +90,62 @@ We looked at a number of existing options before deciding to build FetchProxy:
 
 FetchProxy Features
 -------------------
-* **Transparent feed subscription**
-  
-  Feeds are always fetched via HTTP GET: `get.php?url=http%3A%2F%2Fwww.example.com%2Ffeed`
-  
-  If a feed has not been subscribed yet, it is fetched and auto-subscribed.
-  
-* **Asynchronous feed fetching**
-  
-  Feeds are only fetched via cron job after their first request. As long as the feed is subscribed,
-  it will be fetched periodically based on a configurable default time-to-live (TTL) or a per-feed
-  TTL. 
-  
-* **Automatic unsubscription of unused feeds**
-  
-  If a feed has not be requested by any client within a configurable interval (default is 30 days)
-  then the feed will be deleted and no longer fetched via cron. If it is subsequently requested,
-  then it is fetched and subscribed just like any other new feed access.
-  
-* **Fast responses no matter what**
-  
-  After the initial subscription fetch, FeedProxy will store the cached data or an error status.
-  It will always reply with the cached data or cached error status and never force the client to
-  wait for it to fetch new data. We see responses on the order of 5-20ms for most feed access.
-
-* **Content agnostic**
-  
-  FetchProxy stores the full headers and data for the URLs id subscribes to and does not interpret
-  or parse the data.
-  
-* **Support for HTTP redirects**
-  
-  FetchProxy can follow up to a configurable number of HTTP 301 or 302 redirects.
+*   **Transparent feed subscription**
+    
+    Feeds are always fetched via HTTP GET: `get.php?url=http%3A%2F%2Fwww.example.com%2Ffeed`
+    
+    If a feed has not been subscribed yet, it is fetched and auto-subscribed.
+    
+*   **Asynchronous feed fetching**
+    
+    Feeds are only fetched via cron job after their first request. As long as the feed is subscribed,
+    it will be fetched periodically based on a configurable default time-to-live (TTL) or a per-feed
+    TTL. 
+    
+*   **Automatic unsubscription of unused feeds**
+    
+    If a feed has not be requested by any client within a configurable interval (default is 30 days)
+    then the feed will be deleted and no longer fetched via cron. If it is subsequently requested,
+    then it is fetched and subscribed just like any other new feed access.
+    
+*   **Fast responses no matter what**
+    
+    After the initial subscription fetch, FeedProxy will store the cached data or an error status.
+    It will always reply with the cached data or cached error status and never force the client to
+    wait for it to fetch new data. We see responses on the order of 5-20ms for most feed access.
+    
+*   **Content agnostic**
+    
+    FetchProxy stores the full headers and data for the URLs id subscribes to and does not interpret
+    or parse the data.
+    
+*   **Support for HTTP redirects**
+    
+    FetchProxy can follow up to a configurable number of HTTP 301 or 302 redirects.
   
 Installation
 ------------
 
-1. Clone the git repository: `git clone git://github.com/middlebury/FetchProxy.git`  
-   or download and unzip the code.
+1.  Clone the git repository: `git clone git://github.com/middlebury/FetchProxy.git`  
+    or download and unzip the code.
 
-2. Create a database for FetchProxy and run the `fetchproxy.sql` SQL file to create its tables.
-
-3. Copy `config.php.sample` to `config.php` and edit the values to reflect your database location and preferences.
-
-4. Add a `cron` job that executes `php /path/to/FetchProxy/cron.php` on a regular basis 
-   (every 5 minutes is recommended). Run `php cron.php -h` for command-line options related to 
-   logging and output.
-   
-   An example `cron` entry is: 
-   
-   `*/5 * * * *   /usr/bin/php /var/www/FetchProxy/cron.php --stats --no-log >> /var/log/FetchProxy-cron.log`
+2.  Create a database for FetchProxy and run the `fetchproxy.sql` SQL file to create its tables.
+    
+3.  Copy `config.php.sample` to `config.php` and edit the values to reflect your database location and preferences.
+    
+4.  Add a `cron` job that executes `php /path/to/FetchProxy/cron.php` on a regular basis 
+    (every 5 minutes is recommended). Run `php cron.php -h` for command-line options related to 
+    logging and output.
+    
+    An example `cron` entry is: 
+    
+    `*/5 * * * *   /usr/bin/php /var/www/FetchProxy/cron.php --stats --no-log >> /var/log/FetchProxy-cron.log`
+    
+5.  Configure the IP address of your client application in the `$allowedClients` array in your `config.php`.
+    To prevent users from piping arbitrary content through FetchProxy and potentially serving malware from
+    your domain, you must explicitly specify the list of client IPs that are allow to make requests through
+    FetchProxy.
+    
 
 Usage
 --------
@@ -155,3 +161,4 @@ To fetch a feed that lives at `http://www.example.com/feed` you would make a GET
 ### Custom Refresh cycles ###
 
 Set a non-zero integer number of minutes for a feed in the your database's `feeds.custom_ttl` column. If this column is non-null, the feed will be refreshed on the cron job that occurs that many minutes after the last fetch.
+
