@@ -161,7 +161,10 @@ function fetch_error ($id, $origUrl, $fetchUrl, $message, $statusCode, $statusMs
  * @return void
  */
 function log_event ($type, $message, $id = null, $origUrl = null, $fetchUrl = null, $numErrors = null) {
-	global $db;
+	global $db, $skipLoggingFetchesToDb;
+	
+	if (!empty($skipLoggingFetchesToDb) && in_array($type, array('update', 'error')))
+		return;
 	
 	$stmt = $db->prepare('INSERT INTO log (event_type, feed_id, feed_url, fetch_url, message, num_errors) VALUES (:event_type, :feed_id, :feed_url, :fetch_url, :message, :num_errors)');
 	$stmt->execute(array(
