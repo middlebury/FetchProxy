@@ -38,55 +38,55 @@ a delay of many seconds for the Drupal or Kurogo caches to be refreshed and thei
 To solve the problem of delays due to feed generation and waiting for remote sites
 we needed a feed-caching mechanism with the following features:
 
-* Auto subscribe/cache to any feed requested via HTTP GET
-  
-  Any service that requires additional web-service requests or manual interaction 
-  to set up subscription would require way too many changes on the Drupal and Kurogo ends.
-  As well subscription management becomes more complex.
-  
-* Return quickly no matter what.
-  *For the first request ever, a delay while fetching may be acceptable.*
-  
-  We don't want Drupal or Kurogo ever to have to sit around waiting for a feed. 
-  If there was an error fetching the feed via cron, then an error should be returned 
-  quickly rather than waiting for the source to time out.
-  
-* Always keep the last cached copy.
-  
-  This goes hand-in-hand with returning quickly, always keep a copy around so that 
-  it can be returned rather than forcing Drupal to wait for a fresh version.
-  
-* Update asynchronously.
-  
-  Updates should be triggered via cron. Clients (the Drupal and Kurogo sites) should 
-  get the cached version right away and not wait on a fresh one.
-  
-* Support arbitrary content (RSS and Atom feeds, iCal feeds, KML documents, etc.)
+*   Auto subscribe/cache to any feed requested via HTTP GET
+    
+    Any service that requires additional web-service requests or manual interaction 
+    to set up subscription would require way too many changes on the Drupal and Kurogo ends.
+    As well subscription management becomes more complex.
+    
+*   Return quickly no matter what.  
+    *For the first request ever, a delay while fetching may be acceptable.*
+    
+    We don't want Drupal or Kurogo ever to have to sit around waiting for a feed. 
+    If there was an error fetching the feed via cron, then an error should be returned 
+    quickly rather than waiting for the source to time out.
+    
+*   Always keep the last cached copy.
+    
+    This goes hand-in-hand with returning quickly, always keep a copy around so that 
+    it can be returned rather than forcing Drupal to wait for a fresh version.
+    
+*   Update asynchronously.
+    
+    Updates should be triggered via cron. Clients (the Drupal and Kurogo sites) should 
+    get the cached version right away and not wait on a fresh one.
+    
+*   Support arbitrary content (RSS and Atom feeds, iCal feeds, KML documents, etc.)
 
 We looked at a number of existing options before deciding to build FetchProxy:
 
-* Server side RSS Readers/aggregators (such as RSSLounge, GoogleReader, etc)
-
-  Pros:
-  * Can handle periodic fetching of content
-  * Will keep all content stored/cached
-  
-  Cons:
-  * No auto-subscribe or requires extra web-service API calls to set up subscription.
-  * Won't support iCal, KML, etc
-
-* Caching Web Proxies (Squid, Polipo, etc)
-
-  Pros:
-  * Transparent content handling (support any file type)
-  * Can fetch and cache any URL on request ("auto-subscribe")
-  
-  Cons:
-  * Don't support periodic fetching of content (We would need to write scripts to 
-    search through the cache files and re-request the urls periodically.)
-  * May have limited cache lifetimes and might throw away expired content 
-    before a new version has been fetched.
-  * May not cache error states and force a wait while fetching invalid content.
+*   Server side RSS Readers/aggregators (such as RSSLounge, GoogleReader, etc)
+    
+    Pros:
+    *   Can handle periodic fetching of content
+    *   Will keep all content stored/cached
+    
+    Cons:
+    *   No auto-subscribe or requires extra web-service API calls to set up subscription.
+    *   Won't support iCal, KML, etc
+    
+*   Caching Web Proxies (Squid, Polipo, etc)
+    
+    Pros:
+    *   Transparent content handling (support any file type)
+    *   Can fetch and cache any URL on request ("auto-subscribe")
+    
+    Cons:
+    *   Don't support periodic fetching of content (We would need to write scripts to 
+        search through the cache files and re-request the urls periodically.)
+    *   May have limited cache lifetimes and might throw away expired content 
+        before a new version has been fetched.
+    *   May not cache error states and force a wait while fetching invalid content.
 
 FetchProxy Features
 -------------------
