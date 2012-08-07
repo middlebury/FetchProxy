@@ -93,7 +93,8 @@ foreach ($rows as $row) {
 }
 
 // Print out statistics
-$message = str_pad($fetched, 5, " ", STR_PAD_LEFT).' feeds fetched in '
+$message = date('c').' '
+	.str_pad($fetched, 5, " ", STR_PAD_LEFT).' feeds fetched in '
 	.str_pad(sprintf('%.2f', microtime(true) - $start, 2), 7, " ", STR_PAD_LEFT).'s. '
 	.str_pad($succeeded, 5, " ", STR_PAD_LEFT).' succeeded, '
 	.str_pad($failed, 5, " ", STR_PAD_LEFT).' failed. '
