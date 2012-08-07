@@ -49,7 +49,7 @@ $fetched = count($rows);
 
 foreach ($rows as $row) {
 	if ($verbose) {
-		print $row->id."\t".$row->url."\t";
+		print date('c')."\t".$row->id."\t".$row->url."\t";
 		$feedStart = microtime(true);
 	}
 	
