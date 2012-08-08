@@ -52,6 +52,7 @@ $stmt = $db->prepare(
 	WHERE 
 		(custom_ttl IS NULL AND UNIX_TIMESTAMP(last_fetch) < UNIX_TIMESTAMP() - '.DEFAULT_TTL.' * 60)
 		OR (custom_ttl IS NOT NULL AND UNIX_TIMESTAMP(last_fetch) < UNIX_TIMESTAMP() - custom_ttl * 60)
+	ORDER BY last_fetch ASC
 	LIMIT '.$batchLimit);
 $stmt->execute();
 $rows = $stmt->fetchAll(PDO::FETCH_OBJ);
