@@ -36,13 +36,23 @@ $succeeded = 0;
 $failed = 0;
 
 // Update our feeds
+if (!defined('DEFAULT_TTL'))
+	throw new Exception('DEFAULT_TTL must be defined.');
+if (!defined('BATCH_FREQUENCY'))
+	throw new Exception('BATCH_FREQUENCY must be defined.');
+
+// Set a batch limit to help distribute the fetches throughout the hour.
+$stmt = $db->prepare('SELECT COUNT(id) FROM feeds');
+$stmt->execute();
+$batchLimit = ceil(intval($stmt->fetchColumn()) / (DEFAULT_TTL / BATCH_FREQUENCY));
+
 $stmt = $db->prepare(
 	'SELECT id, url
 	FROM feeds 
 	WHERE 
 		(custom_ttl IS NULL AND UNIX_TIMESTAMP(last_fetch) < UNIX_TIMESTAMP() - '.DEFAULT_TTL.' * 60)
 		OR (custom_ttl IS NOT NULL AND UNIX_TIMESTAMP(last_fetch) < UNIX_TIMESTAMP() - custom_ttl * 60)
-	');
+	LIMIT '.$batchLimit);
 $stmt->execute();
 $rows = $stmt->fetchAll(PDO::FETCH_OBJ);
 $fetched = count($rows);

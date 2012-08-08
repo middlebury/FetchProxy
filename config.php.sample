@@ -5,8 +5,14 @@ define('DB_DSN', 'mysql:host=localhost;dbname=afranco_fetchproxy');
 define('DB_USER', 'testuser');
 define('DB_PASS', 'testpassword');
 
-// Number of minutes between fetches
+// Number of minutes between fetches of each feed
 define('DEFAULT_TTL', 60);
+
+// Number of minutes between runs of cron.php
+// The BATCH_FREQUENCY will be combined with the DEFAULT_TTL to determine the maximum
+// number of feeds to fetch. This maximum will help ensure that fetching gets distributed
+// somewhat evenly.
+define('BATCH_FREQUENCY', 10);
 
 // Number of fetches before an error response is returned to the client
 define('MAX_NUM_ERRORS', 10);
