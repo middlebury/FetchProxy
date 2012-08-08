@@ -40,8 +40,8 @@ $stmt = $db->prepare(
 	'SELECT id, url
 	FROM feeds 
 	WHERE 
-		(custom_ttl IS NULL AND last_fetch < DATE_SUB(NOW(), INTERVAL '.DEFAULT_TTL.' MINUTE))
-		OR (custom_ttl IS NOT NULL AND last_fetch < DATE_SUB(NOW(), INTERVAL custom_ttl MINUTE))
+		(custom_ttl IS NULL AND UNIX_TIMESTAMP(last_fetch) < UNIX_TIMESTAMP() - '.DEFAULT_TTL.' * 60)
+		OR (custom_ttl IS NOT NULL AND UNIX_TIMESTAMP(last_fetch) < UNIX_TIMESTAMP() - custom_ttl * 60)
 	');
 $stmt->execute();
 $rows = $stmt->fetchAll(PDO::FETCH_OBJ);
