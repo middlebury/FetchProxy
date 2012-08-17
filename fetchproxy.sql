@@ -3,9 +3,9 @@
 -- http://www.phpmyadmin.net
 --
 -- Host: localhost
--- Generation Time: Oct 17, 2011 at 11:59 AM
--- Server version: 5.0.77
--- PHP Version: 5.3.6
+-- Generation Time: Aug 17, 2012 at 01:48 PM
+-- Server version: 5.0.95
+-- PHP Version: 5.3.10
 
 --
 -- Database: `afranco_fetchproxy`
@@ -55,3 +55,14 @@ CREATE TABLE IF NOT EXISTS `log` (
   KEY `feed_id` (`feed_id`),
   KEY `tstamp` (`tstamp`,`feed_id`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `processes`
+--
+
+CREATE TABLE IF NOT EXISTS `processes` (
+  `pid` int(11) NOT NULL,
+  `tstamp` timestamp NOT NULL default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
