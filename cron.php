@@ -87,7 +87,11 @@ $fetched = count($rows);
 
 foreach ($rows as $row) {
 	if ($verbose) {
-		print date('c')."\t".$row->id."\t".$row->url."\t";
+		print date('c');
+		print "\t".getmypid();
+		print "\t".$row->id;
+		print "\t".$row->url;
+		print "\t";
 		$feedStart = microtime(true);
 	}
 	
