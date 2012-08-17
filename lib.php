@@ -19,6 +19,13 @@ function fetch_url ($id, $origUrl, $fetchUrl = null, $numRedirects = 0) {
 		fetch_error($id, $origUrl, $fetchUrl, 'Redirect limit of 4 exceeded.', 552, 'Too Many Redirects');
 	
 	$r = new HttpRequest($fetchUrl);
+	
+	if (!defined('USER_AGENT'))
+		define('USER_AGENT', "FetchProxy");
+	
+	$r->addHeaders(array(
+		'User-agent' => USER_AGENT
+	));
 	try {
 		$r->send();
 		if ($r->getResponseCode() == 200) {

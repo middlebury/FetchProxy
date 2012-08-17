@@ -21,6 +21,10 @@ define('MAX_NUM_ERRORS', 10);
 // This value should be a valid MYSQL interval, e.g. '30 DAY'
 define('MAX_LIFE_WITHOUT_ACCESS', '30 DAY');
 
+// Define a user agent for FetchProxy. It would be good to point it at a page describing
+// your service
+// define('USER_AGENT', 'FetchProxy http://fetchproxy.example.com/about.html');
+
 // Define a list of allowed client IP addresses.
 // There is no other security built into this system, so to prevent unauthorized
 // clients from serving unsafe content from your domain, please define an array of
