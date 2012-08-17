@@ -41,6 +41,33 @@ if (!defined('DEFAULT_TTL'))
 if (!defined('BATCH_FREQUENCY'))
 	throw new Exception('BATCH_FREQUENCY must be defined.');
 
+
+// Verify that there aren't other processes.
+// We don't want to overlap and duplicate effort.
+$stmt = $db->prepare('SELECT * FROM processes');
+$clear = $db->prepare('DELETE FROM processes WHERE pid = ?');
+$stmt->execute();
+$processes = $stmt->fetchAll(PDO::FETCH_OBJ);
+if (count($processes)) {
+	// Verify that the other process is still running
+	foreach ($processes as $process) {
+		if (isRunning($process->pid)) {
+			$min = round((time() - strtotime($process->tstamp)) / 60, 2);
+			print date('c')."\tFetch process ".$process->pid." has been going for ".$min." minutes and is still running. Not starting another fetch.\n";
+			exit(1);
+		}
+		// Clear out the entry for the dead process.
+		else {
+			print date('c')."\tFetch process ".$process->pid." has died, clearing.\n";
+			$clear->execute(array($process->pid));
+		}
+	}
+}
+// If there are no other processes, mark ours and start.
+$stmt = $db->prepare('INSERT INTO processes (pid) VALUES (?)');
+$stmt->execute(array(getmypid()));
+
+
 // Set a batch limit to help distribute the fetches throughout the hour.
 $stmt = $db->prepare('SELECT COUNT(id) FROM feeds');
 $stmt->execute();
@@ -113,4 +140,24 @@ $message = date('c').' '
 
 if (in_array('--stats', $argv))
 	print $message;
+
+// Clear out our proccess entry so that other processes can start.
+$clear->execute(array(getmypid()));
+
+/**
+ * Check if a process is running.
+ * From: http://stackoverflow.com/a/45966/15872
+ * 
+ * @param int $pid
+ * @return boolean
+ */
+function isRunning($pid){
+	try{
+		$result = shell_exec(sprintf("ps %d", $pid));
+		if( count(preg_split("/\n/", $result)) > 2){
+			return true;
+		}
+	}catch(Exception $e){}
 	
+	return false;
+}
