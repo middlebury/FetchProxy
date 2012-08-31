@@ -40,6 +40,8 @@ if (!defined('DEFAULT_TTL'))
 	throw new Exception('DEFAULT_TTL must be defined.');
 if (!defined('BATCH_FREQUENCY'))
 	throw new Exception('BATCH_FREQUENCY must be defined.');
+if (!defined('SLOW_FEED_THRESHOLD'))
+	define('SLOW_FEED_THRESHOLD', 45);
 
 
 // Verify that there aren't other processes.
@@ -114,6 +116,16 @@ foreach ($rows as $row) {
 		print "\n";
 		fwrite(STDERR, ob_get_clean());
 	}
+	if ($fetchTime > SLOW_FEED_THRESHOLD) {
+		ob_start();
+		print date('c');
+		print "\t".getmypid();
+		print "\t".$row->id;
+		print "\t".$row->url;
+		print "\tSlow fetch";
+		print "\t".$fetchTime.'s';
+		print "\n";
+		fwrite(STDERR, ob_get_clean());
 	}
 }
 
