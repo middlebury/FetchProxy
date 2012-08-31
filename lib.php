@@ -26,6 +26,18 @@ function fetch_url ($id, $origUrl, $fetchUrl = null, $numRedirects = 0) {
 	$r->addHeaders(array(
 		'User-agent' => USER_AGENT
 	));
+	
+	if (!defined('FETCH_CONNECT_TIMEOUT'))
+		define('FETCH_CONNECT_TIMEOUT', 60);
+	if (!defined('FETCH_TIMEOUT'))
+		define('FETCH_TIMEOUT', 120);
+	
+	$r->setOptions(array(
+		'connecttimeout' => FETCH_CONNECT_TIMEOUT, // timeout on connect
+		'timeout'          => FETCH_TIMEOUT, // timeout on response
+		'redirect'          => 10, // stop after 10 redirects
+	));
+	
 	try {
 		$r->send();
 		if ($r->getResponseCode() == 200) {

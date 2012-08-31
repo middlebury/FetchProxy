@@ -17,6 +17,10 @@ define('BATCH_FREQUENCY', 10);
 // Number of fetches before an error response is returned to the client
 define('MAX_NUM_ERRORS', 10);
 
+// Fetching timeouts so that the fetching process doesn't get stuck
+define('FETCH_CONNECT_TIMEOUT', 60);
+define('FETCH_TIMEOUT', 120);
+
 // If the feed hasn't been accessed for this long, delete it and stop fetching.
 // This value should be a valid MYSQL interval, e.g. '30 DAY'
 define('MAX_LIFE_WITHOUT_ACCESS', '30 DAY');
