@@ -86,13 +86,14 @@ $rows = $stmt->fetchAll(PDO::FETCH_OBJ);
 $fetched = count($rows);
 
 foreach ($rows as $row) {
+	$feedStart = microtime(true);
 	if ($verbose) {
+		ob_start();
 		print date('c');
 		print "\t".getmypid();
 		print "\t".$row->id;
 		print "\t".$row->url;
 		print "\t";
-		$feedStart = microtime(true);
 	}
 	
 	try {
@@ -107,9 +108,12 @@ foreach ($rows as $row) {
 			print "failed";
 	}
 	
+	$fetchTime = round(microtime(true) - $feedStart, 3);
 	if ($verbose) {
-		print "\t".round(microtime(true) - $feedStart, 3).'s';
+		print "\t".$fetchTime.'s';
 		print "\n";
+		fwrite(STDERR, ob_get_clean());
+	}
 	}
 }
 
