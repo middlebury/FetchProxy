@@ -104,6 +104,7 @@ else {
 		'set-cookie',
 		'connection',
 	);
+	$hasViaHeader = false;
 	foreach (explode("\n", $row->headers) as $header) {
 		if (preg_match('/^([^:]+):(.+)/', $header, $matches)) {
 			$name = trim($matches[1]);
@@ -113,8 +114,16 @@ else {
 			if (in_array(strtolower($name), $headersToIgnore)) {
 				continue;
 			}
+			// Add a FetchProxy entry to the Via line.
+			if (strtolower($name) == 'via') {
+				$value .= ', 1.1 FetchProxy';
+				$hasViaHeader = true;
+			}
 			header($name.': '.$value);
 		}
+	}
+	if (!$hasViaHeader) {
+		header('Via: 1.1 FetchProxy');
 	}
 	print $row->data;
 }
