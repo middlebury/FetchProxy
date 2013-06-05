@@ -96,9 +96,25 @@ if (!$row || is_null($row->headers) && is_null($row->data)) {
 }
 // Otherwise, return our content.
 else {
+	$headersToIgnore = array(
+		'cache-control',
+		'expires',
+		'etag',
+		'pragma',
+		'set-cookie',
+		'connection',
+	);
 	foreach (explode("\n", $row->headers) as $header) {
-		// To-do: Filter out some cache-control and expires header here if needed.
-		header($header);
+		if (preg_match('/^([^:]+):(.+)/', $header, $matches)) {
+			$name = trim($matches[1]);
+			$value = trim($matches[2]);
+			
+			// Filter out some cache control headers and others that shouldn't be propagated
+			if (in_array(strtolower($name), $headersToIgnore)) {
+				continue;
+			}
+			header($name.': '.$value);
+		}
 	}
 	print $row->data;
 }
