@@ -18,12 +18,11 @@ function fetch_url ($id, $origUrl, $fetchUrl = null, $numRedirects = 0) {
 	if ($numRedirects > 4)
 		fetch_error($id, $origUrl, $fetchUrl, 'Redirect limit of 4 exceeded.', 552, 'Too Many Redirects');
 	
-	$r = new HttpRequest($fetchUrl);
-	
+	$r = new \http\Client\Request('GET', $fetchUrl);
 	if (!defined('USER_AGENT'))
 		define('USER_AGENT', "FetchProxy");
 	
-	$r->addHeaders(array(
+	$r->setHeaders( array(
 		'User-agent' => USER_AGENT
 	));
 	
@@ -32,17 +31,22 @@ function fetch_url ($id, $origUrl, $fetchUrl = null, $numRedirects = 0) {
 	if (!defined('FETCH_TIMEOUT'))
 		define('FETCH_TIMEOUT', 120);
 	
-	$r->setOptions(array(
+	$r->setOptions ( array(
 		'connecttimeout' => FETCH_CONNECT_TIMEOUT, // timeout on connect
 		'timeout'          => FETCH_TIMEOUT, // timeout on response
 		'redirect'          => 10, // stop after 10 redirects
 	));
 	
 	try {
-		$r->send();
-		if ($r->getResponseCode() == 200) {
-			$headers = $r->getResponseHeader();
-			$data = $r->getResponseBody();
+		$client = (new \http\Client())
+			->enqueue($r)
+			->send();
+		
+		$res = $client->getResponse();
+
+		if ($res->getResponseCode() == 200) {
+			$headers = $res->getHeaders();
+			$data = $res->getBody();
 			
 			$headerStrings = array();
 			foreach ($headers as $name => $value) {
@@ -57,8 +61,8 @@ function fetch_url ($id, $origUrl, $fetchUrl = null, $numRedirects = 0) {
 			
 		}
 		// Follow redirects
-		else if (in_array($r->getResponseCode(), array(301, 302))) {
-			$location = $r->getResponseHeader('Location');
+		else if (in_array($res->getResponseCode(), array(301, 302))) {
+			$location = $res->getHeader('Location');
 			if (empty($location))
 				fetch_error($id, $origUrl, $fetchUrl, 'No Location header found.', 551, 'HTTP Location missing');
 			else
@@ -66,9 +70,9 @@ function fetch_url ($id, $origUrl, $fetchUrl = null, $numRedirects = 0) {
 		}
 		// Record errors
 		else {
-			fetch_error($id, $origUrl, $fetchUrl, 'Error response '.$r->getResponseCode().' recieved.', $r->getResponseCode(), $r->getResponseStatus());
+			fetch_error($id, $origUrl, $fetchUrl, 'Error response '.$res->getResponseCode().' received.', $res->getResponseCode(), $res->getResponseStatus());
 		}
-	} catch (HttpException $e) {
+	} catch (http\Exception $e) {
 		fetch_error($id, $origUrl, $fetchUrl, get_class($e).': '.$e->getMessage(), 550, 'HTTP Error');
 	}
 }
