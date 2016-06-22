@@ -2,7 +2,7 @@
 
 /**
  * Fetch and cache a URL
- * 
+ *
  * @param string $id
  * @param string $origUrl
  * @param optional string $fetchUrl  An alternate URL to fetch when following redirects.
@@ -13,52 +13,52 @@ function fetch_url ($id, $origUrl, $fetchUrl = null, $numRedirects = 0) {
 	// If we aren't following a redirect, fetch the original url
 	if (is_null($fetchUrl))
 		$fetchUrl = $origUrl;
-	
+
 	// Check for redirect loops
 	if ($numRedirects > 4)
 		fetch_error($id, $origUrl, $fetchUrl, 'Redirect limit of 4 exceeded.', 552, 'Too Many Redirects');
-	
+
 	$r = new \http\Client\Request('GET', $fetchUrl);
 	if (!defined('USER_AGENT'))
 		define('USER_AGENT', "FetchProxy");
-	
+
 	$r->setHeaders( array(
 		'User-agent' => USER_AGENT
 	));
-	
+
 	if (!defined('FETCH_CONNECT_TIMEOUT'))
 		define('FETCH_CONNECT_TIMEOUT', 60);
 	if (!defined('FETCH_TIMEOUT'))
 		define('FETCH_TIMEOUT', 120);
-	
+
 	$r->setOptions ( array(
 		'connecttimeout' => FETCH_CONNECT_TIMEOUT, // timeout on connect
 		'timeout'          => FETCH_TIMEOUT, // timeout on response
 		'redirect'          => 10, // stop after 10 redirects
 	));
-	
+
 	try {
 		$client = (new \http\Client())
 			->enqueue($r)
 			->send();
-		
+
 		$res = $client->getResponse();
 
 		if ($res->getResponseCode() == 200) {
 			$headers = $res->getHeaders();
 			$data = $res->getBody();
-			
+
 			$headerStrings = array();
 			foreach ($headers as $name => $value) {
 				$headerStrings[] = $name.': '.$value;
 			}
-			
+
 			$operation = store_feed($id, $origUrl, implode("\n", $headerStrings), $data, 200, 'OK');
 			if ($operation == 'INSERT')
 				log_event('add', 'New feed fetched.', $id, $origUrl, $fetchUrl, 0);
 			else
 				log_event('update', 'Feed fetched.', $id, $origUrl, $fetchUrl, 0);
-			
+
 		}
 		// Follow redirects
 		else if (in_array($res->getResponseCode(), array(301, 302))) {
@@ -79,7 +79,7 @@ function fetch_url ($id, $origUrl, $fetchUrl = null, $numRedirects = 0) {
 
 /**
  * Store a feed, return the type of operation 'INSERT' or 'UPDATE'
- * 
+ *
  * @param string $id The id of the feed.
  * @param string $url The URL of the feed.
  * @param string $headers
@@ -90,7 +90,7 @@ function fetch_url ($id, $origUrl, $fetchUrl = null, $numRedirects = 0) {
  */
 function store_feed ($id, $url, $headers, $data, $statusCode, $statusMsg) {
 	global $db;
-	
+
 	$stmt = $db->prepare('SELECT COUNT(*) FROM feeds WHERE id = ?');
 	$stmt->execute(array($id));
 	$exists = intval($stmt->fetchColumn());
@@ -104,7 +104,7 @@ function store_feed ($id, $url, $headers, $data, $statusCode, $statusMsg) {
 				':status_code' => $statusCode,
 				':status_msg' => $statusMsg,
 			));
-		
+
 		return 'UPDATE';
 	} else {
 		$stmt = $db->prepare('INSERT INTO feeds (id, url, headers, data, status_code, status_msg, last_fetch, last_access, num_errors) VALUES (:id, :url, :headers, :data, :status_code, :status_msg, NOW(), NOW(), 0)');
@@ -116,14 +116,14 @@ function store_feed ($id, $url, $headers, $data, $statusCode, $statusMsg) {
 				':status_code' => $statusCode,
 				':status_msg' => $statusMsg,
 			));
-		
+
 		return 'INSERT';
 	}
 }
 
 /**
  * Record an error state and throw an exception.
- * 
+ *
  * @param string $origUrl
  * @param string $fetchUrl
  * @param string $message
@@ -133,7 +133,7 @@ function store_feed ($id, $url, $headers, $data, $statusCode, $statusMsg) {
  */
 function fetch_error ($id, $origUrl, $fetchUrl, $message, $statusCode, $statusMsg) {
 	global $db;
-	
+
 	// Store an error response so that we can return quickly in the future
 	$stmt = $db->prepare('SELECT COUNT(*) FROM feeds WHERE id = ?');
 	$stmt->execute(array($id));
@@ -142,30 +142,30 @@ function fetch_error ($id, $origUrl, $fetchUrl, $message, $statusCode, $statusMs
 	if (!$exists) {
 		store_feed($id, $origUrl, null, null, $statusCode, $statusMsg);
 	}
-	
+
 	// Get the number of errors.
 	$stmt = $db->prepare('SELECT num_errors FROM feeds WHERE id = ?');
 	$stmt->execute(array($id));
 	$numErrors = $stmt->fetchColumn();
 	$stmt->closeCursor();
 	$numErrors++;
-	
+
 	// Increment the counter in the db row.
 	$stmt = $db->prepare('UPDATE feeds SET last_fetch = NOW(), num_errors = :num_errors WHERE id = :id');
 	$stmt->execute(array(
 			':id' => $id,
 			':num_errors' => $numErrors,
 		));
-	
+
 	log_event('error', $message, $id, $origUrl, $fetchUrl, $numErrors);
-	
+
 	// If we have been fetching for a long time and are still getting errors,
 	// clear out our data to indicate that the client should be given an error
 	// response.
 	if ($numErrors > MAX_NUM_ERRORS) {
 		store_feed($id, $origUrl, null, null, $statusCode, $statusMsg);
 	}
-	
+
 	$exception = new FetchProxyException($message, $statusCode);
 	$exception->setStatusMessage($statusMsg);
 	throw $exception;
@@ -173,22 +173,22 @@ function fetch_error ($id, $origUrl, $fetchUrl, $message, $statusCode, $statusMs
 
 /**
  * Log an event
- * 
+ *
  * @param string $type
  * @param string $message
  * @param string $id
  * @param string $origUrl
  * @param optional string $fetchUrl
  * @param optional int $numErrors
- * @param string 
+ * @param string
  * @return void
  */
 function log_event ($type, $message, $id = null, $origUrl = null, $fetchUrl = null, $numErrors = null) {
 	global $db, $skipLoggingFetchesToDb;
-	
+
 	if (!empty($skipLoggingFetchesToDb) && in_array($type, array('update', 'error')))
 		return;
-	
+
 	$stmt = $db->prepare('INSERT INTO log (event_type, feed_id, feed_url, fetch_url, message, num_errors) VALUES (:event_type, :feed_id, :feed_url, :fetch_url, :message, :num_errors)');
 	$stmt->execute(array(
 			':event_type' => $type,
@@ -207,10 +207,10 @@ class FetchProxyException
 	extends RuntimeException
 {
 	private $statusMsg = '';
-	
+
 	/**
 	 * Set the status message.
-	 * 
+	 *
 	 * @param string $statusMsg
 	 * @return void
 	 */
@@ -219,12 +219,12 @@ class FetchProxyException
 	}
 	/**
 	 * Answer our status message
-	 * 
+	 *
 	 * @return string
 	 */
 	public function getStatusMessage () {
 		return $this->statusMsg;
 	}
-	
-	
+
+
 }

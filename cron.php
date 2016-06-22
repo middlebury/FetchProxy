@@ -77,8 +77,8 @@ $batchLimit = ceil(intval($stmt->fetchColumn()) / (DEFAULT_TTL / BATCH_FREQUENCY
 
 $stmt = $db->prepare(
 	'SELECT id, url
-	FROM feeds 
-	WHERE 
+	FROM feeds
+	WHERE
 		(custom_ttl IS NULL AND UNIX_TIMESTAMP(last_fetch) < UNIX_TIMESTAMP() - '.DEFAULT_TTL.' * 60)
 		OR (custom_ttl IS NOT NULL AND UNIX_TIMESTAMP(last_fetch) < UNIX_TIMESTAMP() - custom_ttl * 60)
 	ORDER BY last_fetch ASC
@@ -97,7 +97,7 @@ foreach ($rows as $row) {
 		print "\t".$row->url;
 		print "\t";
 	}
-	
+
 	try {
 		fetch_url($row->id, $row->url);
 		$succeeded++;
@@ -109,7 +109,7 @@ foreach ($rows as $row) {
 		if ($verbose)
 			print "failed";
 	}
-	
+
 	$fetchTime = round(microtime(true) - $feedStart, 3);
 	if ($verbose) {
 		print "\t".$fetchTime.'s';
@@ -134,8 +134,8 @@ foreach ($rows as $row) {
 // effort continuing to fetch them.
 $stmt = $db->prepare(
 	'SELECT id, url
-	FROM feeds 
-	WHERE 
+	FROM feeds
+	WHERE
 		(last_access < DATE_SUB(NOW(), INTERVAL '.MAX_LIFE_WITHOUT_ACCESS.'))
 	');
 $stmt->execute();
@@ -156,7 +156,7 @@ $message = date('c').' '
 	.str_pad(sprintf('%.2f', microtime(true) - $start, 2), 7, " ", STR_PAD_LEFT).'s. '
 	.str_pad($succeeded, 5, " ", STR_PAD_LEFT).' succeeded, '
 	.str_pad($failed, 5, " ", STR_PAD_LEFT).' failed. '
-	.str_pad($deleted, 5, " ", STR_PAD_LEFT).' not accessed in '.MAX_LIFE_WITHOUT_ACCESS.' and deleted.'."\n"; 
+	.str_pad($deleted, 5, " ", STR_PAD_LEFT).' not accessed in '.MAX_LIFE_WITHOUT_ACCESS.' and deleted.'."\n";
 
 if (in_array('--stats', $argv))
 	print $message;
@@ -167,7 +167,7 @@ $clear->execute(array(getmypid()));
 /**
  * Check if a process is running.
  * From: http://stackoverflow.com/a/45966/15872
- * 
+ *
  * @param int $pid
  * @return boolean
  */
@@ -178,6 +178,6 @@ function isRunning($pid){
 			return true;
 		}
 	}catch(Exception $e){}
-	
+
 	return false;
 }

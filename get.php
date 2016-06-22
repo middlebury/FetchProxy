@@ -87,7 +87,7 @@ if (!$row || is_null($row->headers) && is_null($row->data)) {
 		$status = $row->status_msg;
 	else
 		$status = 'Internal Server Error';
-	
+
 	header('HTTP/1.1 '.$code.' '.$status);
 	header('Content-Type: text/plain');
 	print $code.' '.$status."\n";
@@ -109,7 +109,7 @@ else {
 		if (preg_match('/^([^:]+):(.+)/', $header, $matches)) {
 			$name = trim($matches[1]);
 			$value = trim($matches[2]);
-			
+
 			// Filter out some cache control headers and others that shouldn't be propagated
 			if (in_array(strtolower($name), $headersToIgnore)) {
 				continue;
