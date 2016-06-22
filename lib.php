@@ -50,7 +50,13 @@ function fetch_url ($id, $origUrl, $fetchUrl = null, $numRedirects = 0) {
 
 			$headerStrings = array();
 			foreach ($headers as $name => $value) {
-				$headerStrings[] = $name.': '.$value;
+				if (is_array($value)) {
+					foreach ($value as $v) {
+						$headerStrings[] = $name.': '.$v;
+					}
+				} else {
+					$headerStrings[] = $name.': '.$value;
+				}
 			}
 
 			$operation = store_feed($id, $origUrl, implode("\n", $headerStrings), $data, 200, 'OK');
