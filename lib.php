@@ -5,7 +5,6 @@ require_once(dirname(__FILE__).'/vendor/autoload.php');
 use GuzzleHttp\Client;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Exception\TooManyRedirectsException;
-use Exception;
 
 /**
  * Answer a configured HTTP client.
