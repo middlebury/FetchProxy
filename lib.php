@@ -1,52 +1,62 @@
 <?php
 
+require_once(dirname(__FILE__).'/vendor/autoload.php');
+
+use GuzzleHttp\Client;
+use GuzzleHttp\Psr7\Request;
+use GuzzleHttp\Exception\TooManyRedirectsException;
+use Exception;
+
+/**
+ * Answer a configured HTTP client.
+ *
+ * @return \GuzzleHttp\Client
+ */
+function http_client() {
+	static $client;
+	if (!$client) {
+		if (!defined('USER_AGENT')) {
+			define('USER_AGENT', "FetchProxy");
+		}
+		if (!defined('FETCH_CONNECT_TIMEOUT')) {
+			define('FETCH_CONNECT_TIMEOUT', 60);
+		}
+		if (!defined('FETCH_TIMEOUT')) {
+			define('FETCH_TIMEOUT', 120);
+		}
+		if (!defined('FETCH_MAX_REDIRECTS')) {
+			define('FETCH_MAX_REDIRECTS', 10);
+		}
+		$options = [
+			'connect_timeout' => FETCH_CONNECT_TIMEOUT,
+			'timeout' => FETCH_TIMEOUT,
+			'allow_redirects' => [
+				'max' => FETCH_MAX_REDIRECTS,
+				'track_redirects' => true,
+			],
+			'headers' => [
+				'User-agent' => USER_AGENT,
+			],
+		];
+		$client = new Client($options);
+	}
+	return $client;
+}
+
 /**
  * Fetch and cache a URL
  *
  * @param string $id
- * @param string $origUrl
- * @param optional string $fetchUrl  An alternate URL to fetch when following redirects.
- * @param optional int $numRedirects A counter to prevent infinite redirect loops.
+ * @param string $url
  * @return void
  */
-function fetch_url ($id, $origUrl, $fetchUrl = null, $numRedirects = 0) {
-	// If we aren't following a redirect, fetch the original url
-	if (is_null($fetchUrl))
-		$fetchUrl = $origUrl;
-
-	// Check for redirect loops
-	if ($numRedirects > 4)
-		fetch_error($id, $origUrl, $fetchUrl, 'Redirect limit of 4 exceeded.', 552, 'Too Many Redirects');
-
-	$r = new \http\Client\Request('GET', $fetchUrl);
-	if (!defined('USER_AGENT'))
-		define('USER_AGENT', "FetchProxy");
-
-	$r->setHeaders( array(
-		'User-agent' => USER_AGENT
-	));
-
-	if (!defined('FETCH_CONNECT_TIMEOUT'))
-		define('FETCH_CONNECT_TIMEOUT', 60);
-	if (!defined('FETCH_TIMEOUT'))
-		define('FETCH_TIMEOUT', 120);
-
-	$r->setOptions ( array(
-		'connecttimeout' => FETCH_CONNECT_TIMEOUT, // timeout on connect
-		'timeout'          => FETCH_TIMEOUT, // timeout on response
-		'redirect'          => 10, // stop after 10 redirects
-	));
-
+function fetch_url ($id, $url) {
 	try {
-		$client = (new \http\Client())
-			->enqueue($r)
-			->send();
+		$res = http_client()->get($url);
 
-		$res = $client->getResponse();
-
-		if ($res->getResponseCode() == 200) {
+		if ($res->getStatusCode() == 200) {
 			$headers = $res->getHeaders();
-			$data = $res->getBody();
+			$data = $res->getBody()->getContents();
 
 			$headerStrings = array();
 			foreach ($headers as $name => $value) {
@@ -59,27 +69,23 @@ function fetch_url ($id, $origUrl, $fetchUrl = null, $numRedirects = 0) {
 				}
 			}
 
-			$operation = store_feed($id, $origUrl, implode("\n", $headerStrings), $data, 200, 'OK');
+			$operation = store_feed($id, $url, implode("\n", $headerStrings), $data, 200, 'OK');
 			if ($operation == 'INSERT')
-				log_event('add', 'New feed fetched.', $id, $origUrl, $fetchUrl, 0);
+				log_event('add', 'New feed fetched.', $id, $url, $res->getHeaderLine('X-Guzzle-Redirect-History'), 0);
 			else
-				log_event('update', 'Feed fetched.', $id, $origUrl, $fetchUrl, 0);
+				log_event('update', 'Feed fetched.', $id, $url, $res->getHeaderLine('X-Guzzle-Redirect-History'), 0);
 
-		}
-		// Follow redirects
-		else if (in_array($res->getResponseCode(), array(301, 302))) {
-			$location = $res->getHeader('Location');
-			if (empty($location))
-				fetch_error($id, $origUrl, $fetchUrl, 'No Location header found.', 551, 'HTTP Location missing');
-			else
-				fetch_url($id, $origUrl, $location, $numRedirects++);
 		}
 		// Record errors
 		else {
-			fetch_error($id, $origUrl, $fetchUrl, 'Error response '.$res->getResponseCode().' received.', $res->getResponseCode(), $res->getResponseStatus());
+			fetch_error($id, $origUrl, $res->getHeaderLine('X-Guzzle-Redirect-History'), 'Error response '.$res->getStatusCode().' received.', $res->getStatusCode(), $res->getReasonPhrase());
 		}
-	} catch (http\Exception $e) {
-		fetch_error($id, $origUrl, $fetchUrl, get_class($e).': '.$e->getMessage(), 550, 'HTTP Error');
+	}
+	catch (TooManyRedirectsException $e) {
+		fetch_error($id, $origUrl, $res->getHeaderLine('X-Guzzle-Redirect-History'), 'Redirect limit of ' . FETCH_MAX_REDIRECTS . ' exceeded. ' . $res->getHeaderLine('X-Guzzle-Redirect-History'), 552, 'Too Many Redirects');
+	}
+	catch (Exception $e) {
+		fetch_error($id, $origUrl, $res->getHeaderLine('X-Guzzle-Redirect-History'), get_class($e).': '.$e->getMessage(), 550, 'HTTP Error');
 	}
 }
 

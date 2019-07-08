@@ -129,11 +129,16 @@ Installation
 1.  Clone the git repository: `git clone git://github.com/middlebury/FetchProxy.git`  
     or download and unzip the code.
 
-2.  Create a database for FetchProxy and run the `fetchproxy.sql` SQL file to create its tables.
+2.  Install dependencies with `composer install`. If you do not have Composer
+    installed globally on your machine, you can prepare a local install
+    [as described here](https://getcomposer.org/download/). Then run
+    `php composer.phar install`.
 
-3.  Copy `config.php.sample` to `config.php` and edit the values to reflect your database location and preferences.
+3.  Create a database for FetchProxy and run the `fetchproxy.sql` SQL file to create its tables.
 
-4.  Add a `cron` job that executes `php /path/to/FetchProxy/cron.php` on a regular basis
+4.  Copy `config.php.sample` to `config.php` and edit the values to reflect your database location and preferences.
+
+5.  Add a `cron` job that executes `php /path/to/FetchProxy/cron.php` on a regular basis
     (every 5 minutes is recommended). Run `php cron.php -h` for command-line options related to
     logging and output.
 
@@ -141,7 +146,7 @@ Installation
 
     `*/5 * * * *   /usr/bin/php /var/www/FetchProxy/cron.php --stats --no-log >> /var/log/FetchProxy-cron.log`
 
-5.  Configure the IP address of your client application in the `$allowedClients` array in your `config.php`.
+6.  Configure the IP address of your client application in the `$allowedClients` array in your `config.php`.
     To prevent users from piping arbitrary content through FetchProxy and potentially serving malware from
     your domain, you must explicitly specify the list of client IPs that are allow to make requests through
     FetchProxy.
