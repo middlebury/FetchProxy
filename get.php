@@ -114,6 +114,10 @@ else {
 			if (in_array(strtolower($name), $headersToIgnore)) {
 				continue;
 			}
+			// Ignore chunked transfers.
+			if (strtolower($name) == 'transfer-encoding' && $value == 'chunked') {
+				continue;
+			}
 			// Add a FetchProxy entry to the Via line.
 			if (strtolower($name) == 'via') {
 				$value .= ', 1.1 FetchProxy';
