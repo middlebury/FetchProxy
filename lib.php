@@ -81,9 +81,9 @@ function fetch_url ($id, $url) {
 		}
 	}
 	catch (TooManyRedirectsException $e) {
-		try {
+		if (!empty($res)) {
 			fetch_error($id, $url, $res->getHeaderLine('X-Guzzle-Redirect-History'), 'Redirect limit of ' . FETCH_MAX_REDIRECTS . ' exceeded. ' . $res->getHeaderLine('X-Guzzle-Redirect-History'), 552, 'Too Many Redirects');
-		} catch (Exception $e) {
+		} else {
 			fetch_error($id, $url, NULL, get_class($e).': '.$e->getMessage(), 550, 'HTTP Error');
 		}
 	}
